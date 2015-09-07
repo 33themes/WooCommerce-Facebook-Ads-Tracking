@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Facebook Ads Tracking
  * Plugin URI: https://github.com/33themes/WooCommerce-Facebook-Ads-Tracking
  * Description: Plugin integration with Facebook Ads
- * Version: 0.0.1
+ * Version: 0.1
  * Author: gabrielperezs
  * Author URI: http://www.33themes.com
  * License: GPL2

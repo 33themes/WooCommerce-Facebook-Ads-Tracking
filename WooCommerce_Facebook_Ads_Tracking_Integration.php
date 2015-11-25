@@ -14,6 +14,7 @@ class WooCommerce_Facebook_Ads_Tracking_Integration extends WC_Integration {
 
         $this->add_to_cart = $this->get_option('add_to_cart');
         $this->thankyou = $this->get_option('thankyou');
+        $this->facebookpixel = $this->get_option('facebookpixel');
 
         add_action('woocommerce_update_options_integration_' . $this->id, array($this, 'process_admin_options'));
     }
@@ -30,6 +31,12 @@ class WooCommerce_Facebook_Ads_Tracking_Integration extends WC_Integration {
                 'title'         => 'Tracking code: Order tranks',
                 'type'          => 'decimal',
                 'description'   => __('Thanyou screen in the last step of the order', 'woocommerce-facebook-ads-tracking'),
+                'default'       => '',
+            ),
+            'facebookpixel'     => array(
+                'title'         => 'NEW Facebook pixel',
+                'type'          => 'decimal',
+                'description'   => __('Uniq ID and track all actions', 'woocommerce-facebook-ads-tracking'),
                 'default'       => '',
             ),
         );

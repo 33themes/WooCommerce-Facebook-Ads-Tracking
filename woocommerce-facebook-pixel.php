@@ -11,6 +11,7 @@
 
 if (!defined('ABSPATH')) exit;
 
+
 if(!class_exists('WooCommerce_Facebook_Pixel')) {
 
     class WooCommerce_Facebook_Pixel {
@@ -47,7 +48,7 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
 
             echo '<script type="text/json" id="facebook_pixel_'. $product->get_id().'">';
             echo json_encode(array(
-                'content_ids' => [$product->get_sku()],
+                'content_ids' => $product->get_sku(),
                 'content_name' => $product->get_title(),
                 'currency' => get_woocommerce_currency(),
                 'value' => number_format($product->get_price(),2),
@@ -96,9 +97,8 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
                 <?php endif; ?>
 
                 jQuery(document).ready(function($) {
-                    $(document.body).on('added_to_cart', function(event, fragments, cart_hash, thisbutton) {
-                        var product_id = $(thisbutton).attr('data-product_id');
-
+                    $(document.body).on('adding_to_cart', function(event, thisbutton, data) {
+                        var product_id = data['product_id'];
                         var json = $.parseJSON( $('#facebook_pixel_'+product_id).html() );
                         fbq('track', 'AddToCart', json);
                     })
@@ -182,7 +182,7 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
                 <script type="text/javascript">
                     if (typeof(fbq) == 'function') {
                         fbq('track', 'AddToCart', {
-                            content_ids: ['<?php echo $product->get_sku(); ?>'],
+                            content_ids: '<?php echo $product->get_sku(); ?>',
                             content_name: '<?php echo $product->get_title(); ?>',
                             currency: '<?php echo get_woocommerce_currency(); ?>',
                             value: <?php echo number_format($product->get_price(),2); ?>,
@@ -214,8 +214,15 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
             $integration = $this->load_integration();
 
             $order = new WC_Order($order_id);
-            if ( !$order || ( empty($integration->get_option('facebookpixel')) && empty($integration->get_option('thankyou')) ) ) return;
+            if ( !$order || empty($integration->get_option('facebookpixel')) ) return;
+
             $_total = number_format($order->get_total(),2);
+
+            unset($content_ids);
+            foreach ( $order->get_items() as $item_key => $item ) {
+                $product = $order->get_product_from_item( $item );
+                $content_ids[] = $product->get_sku();
+            }
             ?>
 
             <?php if (!empty($integration->get_option('facebookpixel'))): ?>
@@ -224,7 +231,7 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
                     if (typeof(fbq) == 'function') {
                         fbq('track', 'Purchase', {
                             content_type: 'product',
-                            content_ids: ['<?php echo $product->get_sku(); ?>'],
+                            content_ids: <?php echo json_encode($content_ids) ?>,
                             value: <?php echo $_total; ?>,
                             currency: '<?php echo get_woocommerce_currency(); ?>'
                         });
@@ -232,8 +239,14 @@ if(!class_exists('WooCommerce_Facebook_Pixel')) {
                 </script>
                 <noscript>
                     <img height="1" width="1" style="display:none"
-                        src="https://www.facebook.com/tr?id=<?php echo $integration->get_option('facebookpixel'); ?>&ev=Purchase&value=<?php echo $_total; ?>&currency=<?php echo get_woocommerce_currency(); ?>&noscript=1"
-                        />
+                        src="https://www.facebook.com/tr?<?php echo http_build_query(array(
+                            'id' => $integration->get_option('facebookpixel'),
+                            'ev' => 'Purchase',
+                            'value' => $_total,
+                            'currency' => get_woocommerce_currency(),
+                            'noscript' => 1,
+                            'content_ids' => join(',', $content_ids)
+                        )); ?>" />
                 </noscript>
 
             <?php endif; ?>
